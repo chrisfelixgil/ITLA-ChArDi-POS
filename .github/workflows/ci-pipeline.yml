@@ -1,4 +1,4 @@
-name: CI Pipeline - Ingenieria de Software - ITLA Christian Gil | Cyd Jorge
+name: CI Pipeline - Ingenieria de Software - ITLA Christian Gil | Cyd Jorge 
 on: [push, pull_request]
 jobs:
   build:
@@ -9,4 +9,4 @@ jobs:
       - name: Configurar entorno
         run: echo "Configurando entorno de compilación"
       - name: Compilar proyecto
-        run: echo "Ejecutando compilación"
+        run: echo "Ejecutando compilación de manera exitosa!"
