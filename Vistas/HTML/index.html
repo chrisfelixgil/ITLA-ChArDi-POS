@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChArDi POS - Panel Basico</title>
+</head>
+<body>
+    <header>
+        <h1>ChArDi POS System</h1>
+        <p>Panel basico para probar los servicios de productos, facturas, inventario y reportes.</p>
+    </header>
+
+    <main>
+        <section id="productos">
+            <h2>Productos</h2>
+
+            <article>
+                <h3>Crear producto</h3>
+                <form id="form-crear-producto">
+                    <label for="prod-codigo">Codigo</label>
+                    <input id="prod-codigo" name="codigo" type="text" maxlength="50" required />
+
+                    <label for="prod-nombre">Nombre</label>
+                    <input id="prod-nombre" name="nombre" type="text" maxlength="150" required />
+
+                    <label for="prod-descripcion">Descripcion</label>
+                    <input id="prod-descripcion" name="descripcion" type="text" maxlength="255" />
+
+                    <label for="prod-precio">Precio</label>
+                    <input id="prod-precio" name="precio" type="number" min="0" step="0.01" required />
+
+                    <label for="prod-stock">Stock</label>
+                    <input id="prod-stock" name="stock" type="number" min="0" required />
+
+                    <label for="prod-activo">Activo</label>
+                    <select id="prod-activo" name="activo">
+                        <option value="true" selected>Si</option>
+                        <option value="false">No</option>
+                    </select>
+
+                    <button type="submit">Crear producto</button>
+                </form>
+            </article>
+
+            <article>
+                <h3>Actualizar producto</h3>
+                <form id="form-actualizar-producto">
+                    <label for="prod-id-update">ID del producto</label>
+                    <input id="prod-id-update" name="id" type="number" min="1" required />
+
+                    <label for="prod-codigo-update">Codigo</label>
+                    <input id="prod-codigo-update" name="codigo" type="text" maxlength="50" required />
+
+                    <label for="prod-nombre-update">Nombre</label>
+                    <input id="prod-nombre-update" name="nombre" type="text" maxlength="150" required />
+
+                    <label for="prod-descripcion-update">Descripcion</label>
+                    <input id="prod-descripcion-update" name="descripcion" type="text" maxlength="255" />
+
+                    <label for="prod-precio-update">Precio</label>
+                    <input id="prod-precio-update" name="precio" type="number" min="0" step="0.01" required />
+
+                    <label for="prod-stock-update">Stock</label>
+                    <input id="prod-stock-update" name="stock" type="number" min="0" required />
+
+                    <label for="prod-activo-update">Activo</label>
+                    <select id="prod-activo-update" name="activo">
+                        <option value="true" selected>Si</option>
+                        <option value="false">No</option>
+                    </select>
+
+                    <button type="submit">Actualizar producto</button>
+                </form>
+            </article>
+
+            <article>
+                <h3>Consultar productos</h3>
+                <button id="btn-listar-productos" type="button">Listar productos</button>
+                <form id="form-obtener-producto">
+                    <label for="prod-id-get">Buscar por ID</label>
+                    <input id="prod-id-get" name="id" type="number" min="1" required />
+                    <button type="submit">Consultar producto</button>
+                </form>
+            </article>
+        </section>
+
+        <hr />
+
+        <section id="facturas">
+            <h2>Facturas</h2>
+
+            <article>
+                <h3>Crear factura</h3>
+                <form id="form-crear-factura">
+                    <label for="fac-numero">Numero de factura</label>
+                    <input id="fac-numero" name="numeroFactura" type="text" maxlength="30" required />
+
+                    <label for="fac-fecha">Fecha (opcional)</label>
+                    <input id="fac-fecha" name="fecha" type="datetime-local" />
+
+                    <p>Detalle (1 linea basica para empezar)</p>
+
+                    <label for="fac-producto-id">Producto ID</label>
+                    <input id="fac-producto-id" name="productoId" type="number" min="1" required />
+
+                    <label for="fac-cantidad">Cantidad</label>
+                    <input id="fac-cantidad" name="cantidad" type="number" min="1" required />
+
+                    <label for="fac-precio-unitario">Precio unitario (opcional)</label>
+                    <input id="fac-precio-unitario" name="precioUnitario" type="number" min="0" step="0.01" />
+
+                    <button type="submit">Crear factura</button>
+                </form>
+            </article>
+
+            <article>
+                <h3>Facturas por rango de fechas</h3>
+                <form id="form-facturas-rango">
+                    <label for="fac-rango-inicio">Fecha inicio</label>
+                    <input id="fac-rango-inicio" name="fechaInicio" type="datetime-local" required />
+
+                    <label for="fac-rango-fin">Fecha fin</label>
+                    <input id="fac-rango-fin" name="fechaFin" type="datetime-local" required />
+
+                    <button type="submit">Consultar facturas</button>
+                </form>
+            </article>
+        </section>
+
+        <hr />
+
+        <section id="inventario">
+            <h2>Inventario</h2>
+
+            <article>
+                <h3>Obtener stock actual</h3>
+                <form id="form-stock-actual">
+                    <label for="inv-producto-id">Producto ID</label>
+                    <input id="inv-producto-id" name="productoId" type="number" min="1" required />
+                    <button type="submit">Consultar stock</button>
+                </form>
+            </article>
+        </section>
+
+        <hr />
+
+        <section id="reportes">
+            <h2>Reportes de ventas</h2>
+
+            <form id="form-reporte-ventas">
+                <label for="rep-fecha-inicio">Fecha inicio</label>
+                <input id="rep-fecha-inicio" name="fechaInicio" type="datetime-local" required />
+
+                <label for="rep-fecha-fin">Fecha fin</label>
+                <input id="rep-fecha-fin" name="fechaFin" type="datetime-local" required />
+
+                <button type="submit">Generar reporte</button>
+            </form>
+        </section>
+
+        <hr />
+
+        <section id="api-info">
+            <h2>Rutas API esperadas</h2>
+            <ul>
+                <li>Productos: <code>/api/productos</code></li>
+                <li>Facturas: <code>/api/facturas</code></li>
+                <li>Reportes: <code>/api/reportes</code></li>
+            </ul>
+            <p>Nota: los controladores aun estan en construccion; este HTML es una base para conectar luego con JavaScript.</p>
+        </section>
+    </main>
+
+    <script src="../JS/producto.js"></script>
+</body>
+</html>
