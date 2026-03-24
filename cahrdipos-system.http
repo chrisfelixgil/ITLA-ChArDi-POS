@@ -1,0 +1,6 @@
+@cahrdipos_system_HostAddress = http://localhost:5204
+
+GET {{cahrdipos_system_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
