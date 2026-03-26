@@ -7,83 +7,78 @@ using cahrdipos_system.Mapping.DTOs.Factura;
 using cahrdipos_system.Mapping.DTOs.Producto;
 using Microsoft.EntityFrameworkCore;
 
-namespace cahrdipos_system.Services
+namespace cahrdipos_system.Services;
+
+/// <summary>
+/// Implementación de <see cref="IInventarioService"/> que gestiona el stock de productos:
+/// consulta del nivel actual y descuento atómico a partir de los detalles de una factura.
+/// </summary>
+public class InventarioService : IInventarioService
 {
-    public class InventarioService : IInventarioService
+    private readonly ApplicationDbContext _context;
+    private readonly IMapper _mapper;
+
+    public InventarioService(ApplicationDbContext context, IMapper mapper)
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        public InventarioService(ApplicationDbContext context, IMapper mapper)
+        _context = context;
+        _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Descuenta el stock de cada producto referenciado en los detalles de la factura,
+    /// validando existencia y disponibilidad antes de persistir el cambio.
+    /// Toda la operación se ejecuta dentro de una transacción atómica.
+    /// </summary>
+    /// <param name="facturaCreateDto">DTO con los detalles que indican qué productos y cantidades descontar.</param>
+    /// <returns>
+    /// <see cref="ResponseWrapper{T}"/> con <c>true</c> si el descuento fue exitoso (<c>200 OK</c>),
+    /// o un error descriptivo si algún producto no existe o no tiene stock suficiente.
+    /// </returns>
+    public async Task<ResponseWrapper<bool>> DescontarStockAsync(FacturaCreateDto facturaCreateDto)
+    {
+        if (facturaCreateDto.Detalles is null || facturaCreateDto.Detalles.Count == 0)
+            return new ResponseWrapper<bool>(
+                "La factura debe incluir al menos un detalle.",
+                HttpStatusCode.BadRequest);
+
+        var cantidadPorProducto = facturaCreateDto.Detalles
+            .GroupBy(d => d.ProductoId)
+            .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        var stock = await StockHelper.ValidarYDescontarAsync(_context, cantidadPorProducto);
+        if (!stock.Ok)
         {
-            _context = context;
-            _mapper = mapper;
+            await transaction.RollbackAsync();
+            return new ResponseWrapper<bool>(stock.Mensaje!, stock.Status);
         }
 
-        public async Task<ResponseWrapper<bool>> DescontarStockAsync(FacturaCreateDto facturaCreateDto)
-        {
-            if (facturaCreateDto.Detalles is null || facturaCreateDto.Detalles.Count == 0)
-            {
-                return new ResponseWrapper<bool>(
-                    "La factura debe incluir al menos un detalle.",
-                    HttpStatusCode.BadRequest);
-            }
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
 
-            var cantidadPorProducto = facturaCreateDto.Detalles
-                .GroupBy(d => d.ProductoId)
-                .ToDictionary(g => g.Key, g => g.Sum(d => d.Cantidad));
+        return new ResponseWrapper<bool>(true, HttpStatusCode.OK);
+    }
 
-            var productoIds = cantidadPorProducto.Keys.ToList();
+    /// <summary>
+    /// Retorna el estado actual de un producto (incluyendo su stock disponible)
+    /// a partir de su identificador.
+    /// </summary>
+    /// <param name="productoId">Identificador único del producto a consultar.</param>
+    /// <returns>
+    /// <see cref="ResponseWrapper{T}"/> con el <see cref="ProductoResponseDto"/> (<c>200 OK</c>),
+    /// o <c>404 Not Found</c> si el producto no existe.
+    /// </returns>
+    public async Task<ResponseWrapper<ProductoResponseDto>> ObtenerStockActualAsync(int productoId)
+    {
+        var producto = await _context.Productos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == productoId);
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+        if (producto is null)
+            return new ResponseWrapper<ProductoResponseDto>("Producto no encontrado.", HttpStatusCode.NotFound);
 
-            var productos = await _context.Productos
-                .Where(p => productoIds.Contains(p.Id))
-                .ToListAsync();
-
-            if (productos.Count != productoIds.Count)
-            {
-                var encontrados = productos.Select(p => p.Id).ToHashSet();
-                var faltantes = productoIds.Where(id => !encontrados.Contains(id)).ToList();
-                await transaction.RollbackAsync();
-                return new ResponseWrapper<bool>(
-                    $"No se encontraron los productos con id: {string.Join(", ", faltantes)}.",
-                    HttpStatusCode.NotFound);
-            }
-
-            foreach (var producto in productos)
-            {
-                var cantidad = cantidadPorProducto[producto.Id];
-                if (producto.Stock < cantidad)
-                {
-                    await transaction.RollbackAsync();
-                    return new ResponseWrapper<bool>(
-                        $"Stock insuficiente para el producto \"{producto.Nombre}\" (id {producto.Id}). " +
-                        $"Disponible: {producto.Stock}, requerido: {cantidad}.",
-                        HttpStatusCode.BadRequest);
-                }
-
-                producto.Stock -= cantidad;
-            }
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return new ResponseWrapper<bool>(true, HttpStatusCode.OK);
-        }
-
-        public async Task<ResponseWrapper<ProductoResponseDto>> ObtenerStockActualAsync(int productoId)
-        {
-            var producto = await _context.Productos
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == productoId);
-
-            if (producto is null)
-            {
-                return new ResponseWrapper<ProductoResponseDto>("Producto no encontrado.", HttpStatusCode.NotFound);
-            }
-
-            var response = _mapper.Map<ProductoResponseDto>(producto);
-            return new ResponseWrapper<ProductoResponseDto>(response, HttpStatusCode.OK);
-        }
+        var response = _mapper.Map<ProductoResponseDto>(producto);
+        return new ResponseWrapper<ProductoResponseDto>(response, HttpStatusCode.OK);
     }
 }
